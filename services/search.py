@@ -1,38 +1,99 @@
 import json
+import os
 import requests
 from bs4 import BeautifulSoup
-from ddgs import DDGS
+from urllib.parse import quote_plus, urlparse, parse_qs, unquote
+
+
+def _ddg_extract_url(href: str) -> str:
+    """Extrait l'URL cible depuis un lien DuckDuckGo (redir /l/?uddg=...)."""
+    if not href:
+        return ""
+    try:
+        # Liens directs
+        if href.startswith("http://") or href.startswith("https://"):
+            return href
+        # Redirections internes DDG
+        # Ex: /l/?kh=1&uddg=https%3A%2F%2Fexample.com%2F...
+        if href.startswith("/l/") or "uddg=" in href:
+            parsed = urlparse(href)
+            qs = parse_qs(parsed.query)
+            uddg = qs.get("uddg", [""])[0]
+            return unquote(uddg) if uddg else ""
+    except Exception:
+        pass
+    return ""
 
 
 def scrape_duckduckgo(query: str):
     """
-    Scrape les résultats de DuckDuckGo avec la bibli duckduckgo-search.
+    Scrape DuckDuckGo via l'endpoint HTML (sans JS):
+    https://html.duckduckgo.com/html/?q=<query>
+    Retourne jusqu'à 10 résultats {title, link, snippet}.
     """
     try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0 Safari/537.36'
+        }
+        # Essayer plusieurs endpoints HTML compatibles
+        endpoints = [
+            f"https://html.duckduckgo.com/html/?q={quote_plus(query)}",
+            f"https://duckduckgo.com/html/?q={quote_plus(query)}",
+        ]
+
+        soup = None
+        last_err = None
+        for url in endpoints:
+            try:
+                resp = requests.get(url, headers=headers, timeout=12)
+                resp.raise_for_status()
+                soup = BeautifulSoup(resp.text, 'html.parser')
+                break
+            except Exception as e:
+                last_err = e
+                continue
+        if soup is None:
+            raise last_err or RuntimeError("DuckDuckGo unreachable")
+
         results = []
-        # Utiliser la bibli duckduckgo-search
-        with DDGS() as ddgs:
-            ddg_results = ddgs.text(query, max_results=10)
-            print(f"DuckDuckGo: {len(list(ddg_results))} résultats trouvés")
-            # Réinitialiser le générateur
-            with DDGS() as ddgs:
-                for result in ddgs.text(query, max_results=10):
-                        try:
-                            results.append({
-                                'title': result.get('title', ''),
-                                'link': result.get('href', ''),
-                                'snippet': result.get('body', '')
-                            })
-                            # print(f"  - {result.get('title', '')[:50]}...")
-                        except Exception as e:
-                            print(f"Erreur parsing DDG result: {e}")
-                            continue
-            # print(f"DuckDuckGo: {len(results)} résultats parsés")
-            return results
-    except Exception as e:
-        print(f"Erreur DuckDuckGo: {e}")
-        import traceback
-        traceback.print_exc()
+
+        # Résultats principaux (supporter plusieurs structures HTML)
+        candidates = []
+        candidates.extend(soup.select('div.result'))
+        candidates.extend(soup.select('div.results_links_deep.web-result'))
+        candidates.extend(soup.select('div.web-result'))
+
+        seen = set()
+        for item in candidates:
+            a = item.select_one('a.result__a') or item.select_one('h2.result__title a') or item.find('a', href=True)
+            if not a:
+                continue
+            raw_href = (a.get('href') or '').strip()
+            href = _ddg_extract_url(raw_href)
+            title = a.get_text(strip=True)
+            if not href or not title:
+                continue
+            key = (title, href)
+            if key in seen:
+                continue
+
+            # Snippet: essayer diverses classes / balises
+            sn = (
+                item.select_one('a.result__snippet')
+                or item.select_one('div.result__snippet')
+                or item.select_one('div.result__snippet.js-result-snippet')
+                or item.find('p')
+                or item.find('div')
+            )
+            snippet = sn.get_text(strip=True)[:200] if sn else ''
+
+            results.append({'title': title, 'link': href, 'snippet': snippet})
+            seen.add(key)
+            if len(results) >= 10:
+                break
+
+        return results
+    except Exception:
         return []
 
 def scrape_yahoo(query: str):

@@ -27,7 +27,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("My browser")
-        self.setGeometry(500, 300, 1200, 700)
+        self.setGeometry(300, 200, 1500, 800)
         
         # Définir le logo de l'application (support PyInstaller via _MEIPASS)
         svg_path = self._resource_path("assets", "logo.svg")
@@ -73,11 +73,21 @@ class MainWindow(QMainWindow):
         self.search_bar.setPlaceholderText("Rechercher")
         self.search_bar.setFont(QFont("Arial", 14))
         self.search_bar.setFixedWidth(400)
+        self.search_bar.setFixedHeight(40)
+        self.search_bar.setStyleSheet(
+            "QLineEdit { border: 1px solid #dddddd; border-radius: 10px; padding: 6px 10px; }"
+            "QLineEdit:focus { border: 1px solid #4285F4; }"
+        )
         self.search_bar.returnPressed.connect(self.search)
         search_layout.addWidget(self.search_bar)
 
         search_button = QPushButton(QIcon(self._asset_path("assets/search.svg")), "")
         search_button.setFixedSize(40, 40)
+        search_button.setStyleSheet(
+            "QPushButton { border: 1px solid #dddddd; border-radius: 10px; padding: 6px; }"
+            "QPushButton:hover { background-color: #f2f2f2; }"
+            "QPushButton:pressed { background-color: #e6e6e6; }"
+        )
         search_button.clicked.connect(self.search)
         search_layout.addWidget(search_button)
 
@@ -91,28 +101,56 @@ class MainWindow(QMainWindow):
         # Barre de navigation pour la page de résultats
         nav_layout = QHBoxLayout()
 
-        # Bouton précédent
+        # Groupe précédent | next
+        controls_layout = QHBoxLayout()
+        controls_layout.setSpacing(6)
+
         prev_button = QPushButton(QIcon(self._asset_path("assets/precedent.svg")), "")
         prev_button.setFixedSize(40, 40)
+        prev_button.setStyleSheet(
+            "QPushButton { border: 1px solid #dddddd; border-radius: 10px; padding: 6px; }"
+            "QPushButton:hover { background-color: #f2f2f2; }"
+            "QPushButton:pressed { background-color: #e6e6e6; }"
+        )
         prev_button.clicked.connect(self.go_back)
-        nav_layout.addWidget(prev_button)
+        controls_layout.addWidget(prev_button)
 
-        # Bouton next
+        sep = QLabel("|")
+        sep.setStyleSheet("color: #bbbbbb; padding: 0 4px; font-weight: 600;")
+        controls_layout.addWidget(sep)
+
         next_button = QPushButton(QIcon(self._asset_path("assets/next.svg")), "")
         next_button.setFixedSize(40, 40)
+        next_button.setStyleSheet(
+            "QPushButton { border: 1px solid #dddddd; border-radius: 10px; padding: 6px; }"
+            "QPushButton:hover { background-color: #f2f2f2; }"
+            "QPushButton:pressed { background-color: #e6e6e6; }"
+        )
         next_button.clicked.connect(self.go_forward)
-        nav_layout.addWidget(next_button)
+        controls_layout.addWidget(next_button)
+
+        nav_layout.addLayout(controls_layout)
 
         # Input de recherche modifiable
         self.results_search_bar = QLineEdit()
         self.results_search_bar.setPlaceholderText("Rechercher")
         self.results_search_bar.setFont(QFont("Arial", 12))
+        self.results_search_bar.setFixedHeight(40)
+        self.results_search_bar.setStyleSheet(
+            "QLineEdit { border: 1px solid #dddddd; border-radius: 10px; padding: 6px 10px; }"
+            "QLineEdit:focus { border: 1px solid #4285F4; }"
+        )
         self.results_search_bar.returnPressed.connect(self.search_from_results)
         nav_layout.addWidget(self.results_search_bar)
 
         # Bouton reload
         reload_button = QPushButton(QIcon(self._asset_path("assets/reload.svg")), "")
         reload_button.setFixedSize(40, 40)
+        reload_button.setStyleSheet(
+            "QPushButton { border: 1px solid #dddddd; border-radius: 10px; padding: 6px; }"
+            "QPushButton:hover { background-color: #f2f2f2; }"
+            "QPushButton:pressed { background-color: #e6e6e6; }"
+        )
         reload_button.clicked.connect(self.reload_page)
         nav_layout.addWidget(reload_button)
 
@@ -146,9 +184,19 @@ class MainWindow(QMainWindow):
         model_input_layout = QHBoxLayout()
         self.model_input = QLineEdit()
         self.model_input.setPlaceholderText("Demander au modèle...")
+        self.model_input.setFixedHeight(40)
+        self.model_input.setStyleSheet(
+            "QLineEdit { border: 1px solid #dddddd; border-radius: 10px; padding: 6px 10px; }"
+            "QLineEdit:focus { border: 1px solid #4285F4; }"
+        )
         self.model_input.returnPressed.connect(self.on_model_prompt_send)
         send_btn = QPushButton(QIcon(self._asset_path("assets/send.svg")), "")
         send_btn.setFixedSize(40, 40)
+        send_btn.setStyleSheet(
+            "QPushButton { border: 1px solid #dddddd; border-radius: 10px; padding: 6px; }"
+            "QPushButton:hover { background-color: #f2f2f2; }"
+            "QPushButton:pressed { background-color: #e6e6e6; }"
+        )
         send_btn.clicked.connect(self.on_model_prompt_send)
         model_input_layout.addWidget(self.model_input)
         model_input_layout.addWidget(send_btn)
@@ -168,7 +216,6 @@ class MainWindow(QMainWindow):
         """
         query = self.search_bar.text().strip()
         selected_engine = self.search_engine_selector.currentData()
-        selected_name = self.search_engine_selector.currentText()
 
         if query:
             try:
@@ -296,209 +343,6 @@ class MainWindow(QMainWindow):
 
         return text
 
-    def scrape_duckduckgo(self, query):
-        """
-        Scrape les résultats de DuckDuckGo avec la bibli duckduckgo-search.
-        """
-        try:
-            results = []
-            # Utiliser la bibli duckduckgo-search
-            with DDGS() as ddgs:
-                ddg_results = ddgs.text(query, max_results=5)
-                print(f"DuckDuckGo: {len(list(ddg_results))} résultats trouvés")
-                # Réinitialiser le générateur
-                with DDGS() as ddgs:
-                    for result in ddgs.text(query, max_results=5):
-                        try:
-                            results.append({
-                                'title': result.get('title', ''),
-                                'link': result.get('href', ''),
-                                'snippet': result.get('body', '')
-                            })
-                            print(f"  - {result.get('title', '')[:50]}...")
-                        except Exception as e:
-                            print(f"Erreur parsing DDG result: {e}")
-                            continue
-            print(f"DuckDuckGo: {len(results)} résultats parsés")
-            return results
-        except Exception as e:
-            print(f"Erreur DuckDuckGo: {e}")
-            import traceback
-            traceback.print_exc()
-            return []
-
-    def scrape_yahoo(self, query):
-        """
-        Scrape les résultats de Yahoo.
-        """
-        try:
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
-            }
-            url = f"https://search.yahoo.com/search?p={query}"
-            response = requests.get(url, headers=headers, timeout=10)
-            response.raise_for_status()
-            soup = BeautifulSoup(response.content, 'html.parser')
-            results = []
-            print(f"Yahoo: HTML reçu, taille: {len(response.content)}")
-            # Chercher les résultats dans les divs avec classe 'algo'
-            search_items = soup.find_all('div', class_='algo')
-            print(f"Yahoo: {len(search_items)} résultats trouvés")
-            for item in search_items[:5]:
-                try:
-                    # Lien et titre
-                    link_elem = item.find('a', href=True)
-                    if not link_elem:
-                        continue
-                    link = link_elem.get('href', '')
-                    if not link.startswith('http'):
-                        continue
-                    title = link_elem.get_text(strip=True)
-                    if not title or len(title) < 3:
-                        continue
-                    # Description
-                    description = ""
-                    desc_elem = item.find('div', class_='compText')
-                    if not desc_elem:
-                        desc_elem = item.find(['p', 'div'])
-                    if desc_elem:
-                        description = desc_elem.get_text(strip=True)
-                    results.append({
-                        'title': title,
-                        'link': link,
-                        'snippet': description[:200] if description else "Pas de description"
-                    })
-                    print(f"  - {title[:50]}...")
-                except Exception as e:
-                    print(f"Erreur parsing Yahoo item: {e}")
-                    continue
-            print(f"Yahoo: {len(results)} résultats parsés")
-            return results
-        except Exception as e:
-            print(f"Erreur Yahoo: {e}")
-            import traceback
-            traceback.print_exc()
-            return []
-
-    def generate_results_html(self, first_results, second_results, first_name="DuckDuckGo", second_name="Yahoo"):
-        """
-        Génère le HTML avec les résultats en deux colonnes.
-        """
-        second_name = "Yahoo"
-        html = """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    margin: 20px;
-                    background-color: #f5f5f5;
-                }
-                .container {
-                    display: flex;
-                    gap: 20px;
-                }
-                .column {
-                    flex: 1;
-                    background-color: white;
-                    padding: 15px;
-                    border-radius: 8px;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                }
-                .column h2 {
-                    border-bottom: 2px solid #4285F4;
-                    padding-bottom: 10px;
-                    margin-top: 0;
-                }
-                .bing h2 {
-                    border-bottom: 2px solid #7B0099;
-                }
-                .ddg h2 {
-                    border-bottom: 2px solid #DE5833;
-                }
-                .result {
-                    margin-bottom: 20px;
-                    padding-bottom: 15px;
-                    border-bottom: 1px solid #eee;
-                }
-                .result:last-child {
-                    border-bottom: none;
-                }
-                .result a {
-                    color: #1a0dab;
-                    text-decoration: none;
-                    font-weight: bold;
-                    font-size: 18px;
-                    display: block;
-                    margin-bottom: 5px;
-                }
-                .result a:hover {
-                    text-decoration: underline;
-                }
-                .result p {
-                    color: #545454;
-                    margin: 5px 0;
-                    line-height: 1.6;
-                }
-                .url {
-                    color: #006621;
-                    font-size: 14px;
-                }
-                .no-results {
-                    color: #999;
-                    font-style: italic;
-                    padding: 20px;
-                    text-align: center;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="column ddg">
-                    <!-- <h2>""" + first_name + """</h2> -->
-        """
-        # Ajouter les résultats du premier moteur
-        if first_results:
-            for result in first_results:
-                html += f"""
-                    <div class=\"result\">
-                        <a href=\"javascript:void(0)\" onclick=\"openLink('{result['link']}'); return false;\">{result['title']}</a>
-                        <p class=\"url\">{result['link'][:70]}...</p>
-                        <p>{result['snippet'][:150]}...</p>
-                    </div>
-                """
-        else:
-            html += "<div class='no-results'>Aucun résultat trouvé</div>"
-        html += """
-                </div>
-                <div class=\"column yahoo\">
-                    <!-- <h2>""" + second_name + """</h2> -->
-        """
-        # Ajouter les résultats du deuxième moteur
-        if second_results:
-            for result in second_results:
-                html += f"""
-                    <div class=\"result\">
-                        <a href=\"javascript:void(0)\" onclick=\"openLink('{result['link']}'); return false;\">{result['title']}</a>
-                        <p class=\"url\">{result['link'][:70]}...</p>
-                        <p>{result['snippet'][:150]}...</p>
-                    </div>
-                """
-        else:
-            html += "<div class='no-results'>Aucun résultat trouvé</div>"
-        html += """
-                </div>
-            </div>
-            <script>
-                function openLink(url) {
-                    window.location.href = url;
-                }
-            </script>
-        </body>
-        </html>
-        """
-        return html
 
     def reload_page(self):
         """
@@ -556,77 +400,3 @@ class MainWindow(QMainWindow):
         # Normaliser le séparateur et déléguer à _resource_path
         parts = rel_path.split("/")
         return self._resource_path(*parts)
-
-class LegacyModelWorker(QObject):
-    finished = pyqtSignal(str)
-    error = pyqtSignal(str)
-
-    def __init__(self, prompt, token):
-        super().__init__()
-        self.prompt = prompt
-        self.token = token
-
-    def run(self):
-        try:
-            url = "https://api-inference.huggingface.co/models/microsoft/bitnet-b1.58-2B-4T"
-            headers = {"Authorization": f"Bearer {self.token}", "Accept": "application/json"}
-            payload = {"inputs": self.prompt, "parameters": {"max_new_tokens": 128, "temperature": 0.7}}
-            r = requests.post(url, headers=headers, json=payload, timeout=120)
-            if r.status_code == 503:
-                info = r.json()
-                self.error.emit(info.get("error", "Le modèle est en cours de chargement. Réessayez plus tard."))
-                return
-            if r.status_code >= 400:
-                self.error.emit(f"Erreur API ({r.status_code})")
-                return
-            data = r.json()
-            if isinstance(data, list) and data and "generated_text" in data[0]:
-                text = data[0]["generated_text"]
-            elif isinstance(data, dict) and "generated_text" in data:
-                text = data["generated_text"]
-            else:
-                text = json.dumps(data)
-            self.finished.emit(text)
-        except Exception as e:
-            self.error.emit(str(e))
-        pass
-
-    def reload_page(self):
-        """
-        Relance la recherche actuelle.
-        """
-        query = self.results_search_bar.text().strip()
-        if query:
-            self.search()
-
-    def go_back(self):
-        """
-        Retour à la page précédente dans l'historique du navigateur.
-        """
-        self.results_view.back()
-
-    def go_forward(self):
-        """
-        Aller à la page suivante dans l'historique du navigateur.
-        """
-        self.results_view.forward()
-
-    def load_search_engines(self):
-        """
-        Charge la liste des moteurs de recherche depuis un fichier JSON.
-        Retourne la liste vide en cas d'echec.
-        """
-        json_path = os.path.join("config", "search_engines.json")
-        try:
-            if not os.path.exists(json_path):
-                QMessageBox.critical(self, "Erreur", f"Le fichier {json_path} est introuvable.")
-                return []
-
-            with open(json_path, "r") as file:
-                return json.load(file)
-        except json.JSONDecodeError:
-            QMessageBox.critical(self, "Erreur", "Erreur json format.")
-            return []
-        except Exception as e:
-            QMessageBox.critical(self, "Erreur", f"Une erreur est survenue : {str(e)}")
-            return []

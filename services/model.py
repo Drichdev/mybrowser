@@ -21,15 +21,15 @@ class ModelWorker(QObject):
         Exécute la requête vers l'API Gradio
         """
         try:
-            self.progress.emit("🔄 Connexion au modèle...")
+            self.progress.emit("Connexion au modèle...")
             
             # Créer le client Gradio
             client = Client(self.space_name)
             
             if self.use_web_search:
-                self.progress.emit("🔍 Recherche web activée...")
+                self.progress.emit("Recherche web activée...")
             else:
-                self.progress.emit("🤖 Génération de la réponse...")
+                self.progress.emit("Génération de la réponse...")
             
             # Appeler l'API
             result = client.predict(
@@ -44,7 +44,7 @@ class ModelWorker(QObject):
             self.finished.emit(result)
             
         except Exception as e:
-            self.error.emit(f"❌ Erreur: {str(e)}")
+            self.error.emit(f"Erreur: {str(e)}")
 
 
 # Exemple d'utilisation avec interface PyQt5
