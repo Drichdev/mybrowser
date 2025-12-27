@@ -1,4 +1,4 @@
-# MyBrowser
+# Drichsearch
 
 Mini navigateur en PyQt5 avec panneau d’assistant IA (Gradio), recherche multi-moteurs et empaquetage macOS/Windows.
 
@@ -57,8 +57,8 @@ chmod +x scripts/build_mac.sh
 ./scripts/build_mac.sh
 ```
 Sorties:
-- Application: `dist/MyBrowser.app`
-- DMG: `dist/MyBrowser.dmg`
+- Application: `dist/Drichsearch.app`
+- DMG: `dist/Drichsearch.dmg`
 
 Si besoin d’un `.icns` et que vous avez un PNG: placez `assets/logo.png` (1024x1024 recommandé); le script générera `assets/logo.icns`.
 
@@ -67,7 +67,7 @@ Build manuel (alternative):
 pyinstaller \
   --noconfirm \
   --windowed \
-  --name MyBrowser \
+  --name Drichsearch \
   --icon assets/logo.icns \
   --add-data "assets:assets" \
   --add-data "config:config" \
@@ -80,14 +80,14 @@ pyinstaller \
 ```bat
 scripts\build_win.bat
 ```
-Sortie: `dist\MyBrowser\MyBrowser.exe`
+Sortie: `dist\Drichsearch\Drichsearch.exe`
 
 Build manuel (alternative):
 ```bat
 pyinstaller ^
   --noconfirm ^
   --windowed ^
-  --name MyBrowser ^
+  --name Drichsearch ^
   --icon assets\logo.ico ^
   --add-data "assets;assets" ^
   --add-data "config;config" ^
