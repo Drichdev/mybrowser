@@ -2,9 +2,6 @@ import os
 import sys
 import json
 import re
-import requests
-from bs4 import BeautifulSoup
-from ddgs import DDGS
 from services.search import scrape_duckduckgo, scrape_yahoo, generate_results_html
 from services.model import ModelWorker
 from PyQt5.QtWidgets import (
@@ -62,11 +59,9 @@ class MainWindow(QMainWindow):
         # Menu déroulant pour les moteurs de recherche
         self.search_engine_selector = QComboBox()
         for engine in search_engines:
-            logo_path = engine.get("logo", "")
-            if os.path.exists(logo_path):
-                icon = QIcon(logo_path)
-            else:
-                icon = QIcon()
+            logo_rel = engine.get("logo", "")
+            logo_path = self._asset_path(logo_rel) if logo_rel else ""
+            icon = QIcon(logo_path) if logo_path and os.path.exists(logo_path) else QIcon()
             self.search_engine_selector.addItem(icon, engine["name"], engine["url"])
         home_layout.addWidget(self.search_engine_selector, alignment=Qt.AlignCenter)
 
@@ -81,7 +76,7 @@ class MainWindow(QMainWindow):
         self.search_bar.returnPressed.connect(self.search)
         search_layout.addWidget(self.search_bar)
 
-        search_button = QPushButton(QIcon("assets/search.svg"), "")
+        search_button = QPushButton(QIcon(self._asset_path("assets/search.svg")), "")
         search_button.setFixedSize(40, 40)
         search_button.clicked.connect(self.search)
         search_layout.addWidget(search_button)
@@ -97,13 +92,13 @@ class MainWindow(QMainWindow):
         nav_layout = QHBoxLayout()
 
         # Bouton précédent
-        prev_button = QPushButton(QIcon("assets/precedent.svg"), "")
+        prev_button = QPushButton(QIcon(self._asset_path("assets/precedent.svg")), "")
         prev_button.setFixedSize(40, 40)
         prev_button.clicked.connect(self.go_back)
         nav_layout.addWidget(prev_button)
 
         # Bouton next
-        next_button = QPushButton(QIcon("assets/next.svg"), "")
+        next_button = QPushButton(QIcon(self._asset_path("assets/next.svg")), "")
         next_button.setFixedSize(40, 40)
         next_button.clicked.connect(self.go_forward)
         nav_layout.addWidget(next_button)
@@ -116,7 +111,7 @@ class MainWindow(QMainWindow):
         nav_layout.addWidget(self.results_search_bar)
 
         # Bouton reload
-        reload_button = QPushButton(QIcon("assets/reload.svg"), "")
+        reload_button = QPushButton(QIcon(self._asset_path("assets/reload.svg")), "")
         reload_button.setFixedSize(40, 40)
         reload_button.clicked.connect(self.reload_page)
         nav_layout.addWidget(reload_button)
@@ -138,7 +133,7 @@ class MainWindow(QMainWindow):
         # Loader (spinner) pour la génération du modèle
         self.model_loader = QLabel()
         self.model_loader.setAlignment(Qt.AlignCenter)
-        loader_path = os.path.join("assets", "loader.gif")
+        loader_path = self._asset_path("assets/loader.gif")
         if os.path.exists(loader_path):
             self._loader_movie = QMovie(loader_path)
             self.model_loader.setMovie(self._loader_movie)
@@ -152,7 +147,7 @@ class MainWindow(QMainWindow):
         self.model_input = QLineEdit()
         self.model_input.setPlaceholderText("Demander au modèle...")
         self.model_input.returnPressed.connect(self.on_model_prompt_send)
-        send_btn = QPushButton(QIcon("assets/send.svg"), "")
+        send_btn = QPushButton(QIcon(self._asset_path("assets/send.svg")), "")
         send_btn.setFixedSize(40, 40)
         send_btn.clicked.connect(self.on_model_prompt_send)
         model_input_layout.addWidget(self.model_input)
@@ -551,6 +546,16 @@ class MainWindow(QMainWindow):
         """
         base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.dirname(__file__)))
         return os.path.join(base_path, *paths)
+
+    def _asset_path(self, rel_path: str) -> str:
+        """
+        Résout un chemin d'asset depuis une chaîne relative (ex: "assets/search.svg").
+        """
+        if not rel_path:
+            return ""
+        # Normaliser le séparateur et déléguer à _resource_path
+        parts = rel_path.split("/")
+        return self._resource_path(*parts)
 
 class LegacyModelWorker(QObject):
     finished = pyqtSignal(str)

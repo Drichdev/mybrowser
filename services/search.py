@@ -5,25 +5,35 @@ from ddgs import DDGS
 
 
 def scrape_duckduckgo(query: str):
+    """
+    Scrape les résultats de DuckDuckGo avec la bibli duckduckgo-search.
+    """
     try:
         results = []
+        # Utiliser la bibli duckduckgo-search
         with DDGS() as ddgs:
-            ddg_results = ddgs.text(query, max_results=5)
-            _ = list(ddg_results)  # consume to count
-        with DDGS() as ddgs:
-            for result in ddgs.text(query, max_results=5):
-                try:
-                    results.append({
-                        'title': result.get('title', ''),
-                        'link': result.get('href', ''),
-                        'snippet': result.get('body', '')
-                    })
-                except Exception:
-                    continue
-        return results
-    except Exception:
+            ddg_results = ddgs.text(query, max_results=10)
+            print(f"DuckDuckGo: {len(list(ddg_results))} résultats trouvés")
+            # Réinitialiser le générateur
+            with DDGS() as ddgs:
+                for result in ddgs.text(query, max_results=10):
+                        try:
+                            results.append({
+                                'title': result.get('title', ''),
+                                'link': result.get('href', ''),
+                                'snippet': result.get('body', '')
+                            })
+                            # print(f"  - {result.get('title', '')[:50]}...")
+                        except Exception as e:
+                            print(f"Erreur parsing DDG result: {e}")
+                            continue
+            # print(f"DuckDuckGo: {len(results)} résultats parsés")
+            return results
+    except Exception as e:
+        print(f"Erreur DuckDuckGo: {e}")
+        import traceback
+        traceback.print_exc()
         return []
-
 
 def scrape_yahoo(query: str):
     try:
@@ -36,7 +46,7 @@ def scrape_yahoo(query: str):
         soup = BeautifulSoup(response.content, 'html.parser')
         results = []
         search_items = soup.find_all('div', class_='algo')
-        for item in search_items[:5]:
+        for item in search_items[:10]:
             try:
                 link_elem = item.find('a', href=True)
                 if not link_elem:
