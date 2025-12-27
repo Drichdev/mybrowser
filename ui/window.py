@@ -26,7 +26,7 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("My browser")
+        self.setWindowTitle("Drichsearch")
         self.setGeometry(300, 200, 1500, 800)
         
         # Définir le logo de l'application (support PyInstaller via _MEIPASS)

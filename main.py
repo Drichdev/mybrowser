@@ -4,6 +4,7 @@ from ui.window import MainWindow
 
 def main():
     app = QApplication(sys.argv)
+    app.setApplicationName("Drichsearch")
     main_window = MainWindow()
     main_window.show()
     sys.exit(app.exec_())
