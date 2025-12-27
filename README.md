@@ -15,7 +15,7 @@ Mini navigateur en PyQt5 avec panneau d’assistant IA (Gradio), recherche multi
 
 ## Installation
 ```bash
-git clone https://github.com/Drichdev/mybrowser.git
+git clone <link>
 cd mybrowser
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
