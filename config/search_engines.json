@@ -1,0 +1,22 @@
+[
+    {
+        "name": "Personnalisé",
+        "url": "custom",
+        "logo": "assets/logo.svg"
+    },
+    {
+        "name": "Google",
+        "url": "https://www.google.com/search?q=",
+        "logo": "assets/google.svg"
+    },
+    {
+        "name": "Bing",
+        "url": "https://www.bing.com/search?q=",
+        "logo": "assets/bing.svg"
+    },
+    {
+        "name": "DuckDuckGo",
+        "url": "https://duckduckgo.com/?q=",
+        "logo": "assets/duckduckgo.svg"
+    }
+]
